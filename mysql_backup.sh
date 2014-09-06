@@ -32,17 +32,20 @@ IGNORE_DB="(^mysql|_schema$)"
 # include mysql and mysqldump binaries for cron bash user
 PATH=$PATH:/usr/local/mysql/bin
 
+# Number of days to keep backups
+KEEP_BACKUPS_FOR=30 #days
+
 #==============================================================================
 # MAIN SCRIPT
 #==============================================================================
 
-# delete backups older than 30 days
-echo "Deleting *.sql.gz files in $BACKUP_DIR older than 30 days" 
-find $BACKUP_DIR -type f -name "*.sql.gz" -mtime +30 -exec rm {} \;
+function delete_old_backups()
+{
+  echo "Deleting $BACKUP_DIR/*.sql.gz older than $KEEP_BACKUPS_FOR days"
+  find $BACKUP_DIR -type f -name "*.sql.gz" -mtime +$KEEP_BACKUPS_FOR -exec rm {} \;
+}
 
-# YYYY-MM-DD
-timestamp=$(date +%F)
-echo "Filename Timestamp: $timestamp" 
+delete_old_backups
 
 # Build Login String
 mysql_login="-u $MYSQL_UNAME" 
@@ -53,6 +56,10 @@ fi
 # build database list
 show_databases="SHOW DATABASES WHERE \`Database\` NOT REGEXP '$IGNORE_DB'" 
 database_list=$(mysql $mysql_login -e "$show_databases"|awk -F " " '{if (NR!=1) print $1}')
+
+# YYYY-MM-DD
+timestamp=$(date +%F)
+echo "Filename Timestamp: $timestamp" 
 
 # backup all MySQL databases
 for database in $database_list; do
