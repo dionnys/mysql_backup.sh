@@ -26,7 +26,8 @@ MYSQL_UNAME=root
 MYSQL_PWORD=
 
 # Don't backup databases with these names 
-IGNORE_DB="(^mysql|_schema$|_test[0-9]?$)"
+# Example: starts with mysql (^mysql) or ends with _schema (_schema$)
+IGNORE_DB="(^mysql|_schema$)"
 
 # include mysql and mysqldump binaries for cron bash user
 PATH=$PATH:/usr/local/mysql/bin
