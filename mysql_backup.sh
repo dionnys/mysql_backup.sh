@@ -88,8 +88,8 @@ function backup_databases(){
 }
 
 function hr(){
-  for i in {1..100};do echo -n =;done
-  echo ""
+  printf '=%.0s' {1..100}
+  printf "\n"
 }
 
 #==============================================================================
