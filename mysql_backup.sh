@@ -40,7 +40,7 @@ PATH=$PATH:/usr/local/mysql/bin
 echo "Deleting *.sql.gz files in $BACKUP_DIR older than 30 days" 
 find $BACKUP_DIR -type f -name "*.sql.gz" -mtime +30 -exec rm {} \;
 
-# YYYYMM
+# YYYY-MM-dd
 timestamp=$(date +%F)
 echo "Filename Timestamp: $timestamp" 
 
