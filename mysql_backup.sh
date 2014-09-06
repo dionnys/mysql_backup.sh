@@ -47,15 +47,18 @@ function delete_old_backups()
 
 delete_old_backups
 
-# Build Login String
-mysql_login="-u $MYSQL_UNAME" 
-if [ -n "$MYSQL_PWORD" ]; then
-  mysql_login+=" -p$MYSQL_PWORD" 
-fi
+function mysql_login()
+{
+  local mysql_login="-u $MYSQL_UNAME" 
+  if [ -n "$MYSQL_PWORD" ]; then
+    local mysql_login+=" -p$MYSQL_PWORD" 
+  fi
+  echo "$mysql_login"
+}
 
 # build database list
-show_databases="SHOW DATABASES WHERE \`Database\` NOT REGEXP '$IGNORE_DB'" 
-database_list=$(mysql $mysql_login -e "$show_databases"|awk -F " " '{if (NR!=1) print $1}')
+show_databases="SHOW DATABASES WHERE \`Database\` NOT REGEXP '$IGNORE_DB'"
+database_list=$(mysql $(mysql_login) -e "$show_databases"|awk -F " " '{if (NR!=1) print $1}')
 
 # YYYY-MM-DD
 timestamp=$(date +%F)
@@ -67,4 +70,6 @@ for database in $database_list; do
   echo "Backup $database to $backup_file" 
   mysqldump $mysql_login $database | gzip -9 > $backup_file
 done
+
+
 
