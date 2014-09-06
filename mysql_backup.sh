@@ -6,7 +6,7 @@
 #DATE:             2013-12-20
 #VERSION:          0.4
 #USAGE:            ./mysql_backup.sh
-#DAILY CRON:
+#CRON:
   # example cron for daily db backup @ 9:15 am
   # min  hr mday month wday command
   # 15   9  *    *     *    /Users/[your user name]/scripts/mysql_backup.sh
