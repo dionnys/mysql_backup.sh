@@ -36,8 +36,11 @@ PATH=$PATH:/usr/local/mysql/bin
 KEEP_BACKUPS_FOR=30 #days
 
 #==============================================================================
-# MAIN SCRIPT
+# METHODS
 #==============================================================================
+
+# YYYY-MM-DD
+TIMESTAMP=$(date +%F)
 
 function delete_old_backups()
 {
@@ -45,31 +48,55 @@ function delete_old_backups()
   find $BACKUP_DIR -type f -name "*.sql.gz" -mtime +$KEEP_BACKUPS_FOR -exec rm {} \;
 }
 
-delete_old_backups
-
-function mysql_login()
-{
+function mysql_login() {
   local mysql_login="-u $MYSQL_UNAME" 
   if [ -n "$MYSQL_PWORD" ]; then
     local mysql_login+=" -p$MYSQL_PWORD" 
   fi
-  echo "$mysql_login"
+  echo $mysql_login
 }
 
-# build database list
-show_databases="SHOW DATABASES WHERE \`Database\` NOT REGEXP '$IGNORE_DB'"
-database_list=$(mysql $(mysql_login) -e "$show_databases"|awk -F " " '{if (NR!=1) print $1}')
+function database_list() {
+  local show_databases_sql="SHOW DATABASES WHERE \`Database\` NOT REGEXP '$IGNORE_DB'"
+  echo $(mysql $(mysql_login) -e "$show_databases_sql"|awk -F " " '{if (NR!=1) print $1}')
+}
 
-# YYYY-MM-DD
-timestamp=$(date +%F)
-echo "Filename Timestamp: $timestamp" 
+function echo_status(){
+  printf '\r'; 
+  printf ' %0.s' {0..100} 
+  printf '\r'; 
+  printf "$1"'\r'
+}
 
-# backup all MySQL databases
-for database in $database_list; do
-  backup_file="$BACKUP_DIR/$timestamp.$database.sql.gz" 
-  echo "Backup $database to $backup_file" 
-  mysqldump $mysql_login $database | gzip -9 > $backup_file
-done
+function backup_database(){
+    backup_file="$BACKUP_DIR/$TIMESTAMP.$database.sql.gz" 
+    output+="$database => $backup_file\n"
+    echo_status "...backing up $count of $total databases: $database"
+    $(mysqldump $(mysql_login) $database | gzip -9 > $backup_file)
+}
 
+function backup_databases(){
+  local databases=$(database_list)
+  local total=$(echo $databases | wc -w | xargs)
+  local output=""
+  local count=1
+  for database in $databases; do
+    backup_database
+    local count=$((count+1))
+  done
+  echo -ne $output | column -t
+}
 
+function hr(){
+  for i in {1..100};do echo -n =;done
+  echo ""
+}
 
+#==============================================================================
+# RUN SCRIPT
+#==============================================================================
+delete_old_backups
+hr
+backup_databases
+hr
+printf "All backed up!\n\n"
